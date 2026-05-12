@@ -1,0 +1,23 @@
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Archivos temporales de Jenkins
+workspace/
+target/
+build/
+
+# Credenciales (NUNCA subir esto)
+*.key
+*.pem
+credentials.txt
+.env
