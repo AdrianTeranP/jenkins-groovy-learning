@@ -1,0 +1,26 @@
+// Mi primer pipeline en Jenkins
+// Job: hola-jenkins
+// Tipo: Pipeline declarativo
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Saludar') {
+            steps {
+                echo 'Hola Jenkins, soy tu primer pipeline'
+            }
+        }
+        stage('Mostrar info') {
+            steps {
+                echo "Build número: ${env.BUILD_NUMBER}"
+                echo "Job: ${env.JOB_NAME}"
+            }
+        }
+        stage('Despedida') {
+            steps {
+                echo 'Pipeline completado correctamente'
+            }
+        }
+    }
+}
