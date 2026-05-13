@@ -1,0 +1,73 @@
+// Pipeline completo con todas las directivas principales
+// Job: pipeline-completo (versión inicial)
+// Demuestra: parameters, environment, when, post
+
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = 'mi-primera-app'
+        VERSION = '1.0.0'
+    }
+
+    parameters {
+        string(name: 'USUARIO', defaultValue: 'totti', description: 'Quién ejecuta el deploy')
+        choice(name: 'AMBIENTE', choices: ['dev', 'qa', 'prod'], description: 'Ambiente destino')
+        booleanParam(name: 'EJECUTAR_TESTS', defaultValue: true, description: '¿Correr tests?')
+    }
+
+    stages {
+        stage('Inicio') {
+            steps {
+                echo "Pipeline iniciado por: ${params.USUARIO}"
+                echo "App: ${APP_NAME} v${VERSION}"
+                echo "Ambiente: ${params.AMBIENTE}"
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo "Construyendo ${APP_NAME}..."
+                echo 'Simulando: mvn clean package'
+            }
+        }
+
+        stage('Tests') {
+            when {
+                expression { params.EJECUTAR_TESTS == true }
+            }
+            steps {
+                echo 'Ejecutando tests...'
+                echo 'Simulando: mvn test'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo "Desplegando a ${params.AMBIENTE}"
+            }
+        }
+
+        stage('Validación producción') {
+            when {
+                expression { params.AMBIENTE == 'prod' }
+            }
+            steps {
+                echo 'Validaciones extras para producción'
+                echo 'Notificando al equipo...'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline terminado. Build #${env.BUILD_NUMBER}"
+        }
+        success {
+            echo 'Todo OK, deploy completado'
+        }
+        failure {
+            echo 'Algo falló, revisar logs'
+        }
+    }
+}

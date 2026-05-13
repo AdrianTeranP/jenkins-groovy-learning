@@ -1,0 +1,72 @@
+// Pipeline para experimentar con when
+// Job: pipeline-completo (versión when avanzado)
+// Demuestra: expression, anyOf, allOf en combinación
+
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'AMBIENTE', choices: ['dev', 'qa', 'prod'], description: 'Ambiente destino')
+        booleanParam(name: 'EJECUTAR_TESTS', defaultValue: true, description: '¿Correr tests?')
+        booleanParam(name: 'NOTIFICAR_SLACK', defaultValue: false, description: '¿Notificar a Slack?')
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Construyendo aplicación...'
+            }
+        }
+
+        stage('Tests unitarios') {
+            when {
+                expression { params.EJECUTAR_TESTS == true }
+            }
+            steps {
+                echo 'Corriendo tests unitarios'
+            }
+        }
+
+        stage('Tests integración') {
+            when {
+                allOf {
+                    expression { params.EJECUTAR_TESTS == true }
+                    expression { params.AMBIENTE != 'dev' }
+                }
+            }
+            steps {
+                echo 'Tests de integración (solo en qa o prod)'
+            }
+        }
+
+        stage('Deploy dev o qa') {
+            when {
+                anyOf {
+                    expression { params.AMBIENTE == 'dev' }
+                    expression { params.AMBIENTE == 'qa' }
+                }
+            }
+            steps {
+                echo "Deploy normal a ${params.AMBIENTE}"
+            }
+        }
+
+        stage('Deploy prod') {
+            when {
+                expression { params.AMBIENTE == 'prod' }
+            }
+            steps {
+                echo 'Deploy a producción con validaciones extra'
+            }
+        }
+
+        stage('Notificar Slack') {
+            when {
+                expression { params.NOTIFICAR_SLACK == true }
+            }
+            steps {
+                echo 'Enviando notificación a Slack...'
+            }
+        }
+    }
+}
