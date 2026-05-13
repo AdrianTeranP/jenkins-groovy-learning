@@ -1,0 +1,94 @@
+// Pipeline del módulo 4 - Groovy avanzado en Jenkins
+// Job: pipeline-groovy-avanzado
+// Demuestra: script {}, funciones, returnStdout, try/catch, iteración
+
+def calcularRuta(ambiente) {
+    return "C:\\deploy\\${ambiente}"
+}
+
+def validarAmbiente(ambiente) {
+    def validos = ['dev', 'qa', 'prod']
+    if (!validos.contains(ambiente)) {
+        error("Ambiente inválido: ${ambiente}")
+    }
+}
+
+pipeline {
+    agent any
+    
+    parameters {
+        choice(name: 'AMBIENTE', choices: ['dev', 'qa', 'prod'], description: 'Ambiente destino')
+        booleanParam(name: 'SIMULAR_ERROR', defaultValue: false, description: '¿Simular un error?')
+    }
+    
+    stages {
+        stage('Validar ambiente') {
+            steps {
+                script {
+                    validarAmbiente(params.AMBIENTE)
+                    echo "Ambiente OK: ${params.AMBIENTE}"
+                }
+            }
+        }
+        
+        stage('Capturar info del sistema') {
+            steps {
+                script {
+                    def fecha = bat(
+                        script: '@echo off & echo %date% %time%',
+                        returnStdout: true
+                    ).trim()
+                    
+                    def usuario = bat(
+                        script: '@echo off & echo %USERNAME%',
+                        returnStdout: true
+                    ).trim()
+                    
+                    def ruta = calcularRuta(params.AMBIENTE)
+                    
+                    echo "Fecha: ${fecha}"
+                    echo "Usuario: ${usuario}"
+                    echo "Ruta de deploy: ${ruta}"
+                }
+            }
+        }
+        
+        stage('Iterar servidores') {
+            steps {
+                script {
+                    def servidores = [
+                        'servidor-app-01',
+                        'servidor-app-02',
+                        'servidor-app-03'
+                    ]
+                    
+                    servidores.each { srv ->
+                        echo "Procesando ${srv}..."
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy con manejo de errores') {
+            steps {
+                script {
+                    try {
+                        echo "Desplegando a ${params.AMBIENTE}..."
+                        
+                        if (params.SIMULAR_ERROR == true) {
+                            error('Error simulado para demostración')
+                        }
+                        
+                        echo 'Deploy completado correctamente'
+                    } catch (Exception e) {
+                        echo "Error capturado: ${e.message}"
+                        echo 'Ejecutando rollback...'
+                        echo 'Pipeline continúa'
+                    } finally {
+                        echo 'Limpieza final'
+                    }
+                }
+            }
+        }
+    }
+}
